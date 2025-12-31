@@ -1,12 +1,12 @@
 import * as Location from 'expo-location';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 
 // 1. CHANGE THESE TO YOUR CURRENT LOCATION TO TEST
 const OFFICE_LOCATION = {
-  latitude: 29.5356,
-  longitude: 76.9732,
+  latitude: 29.5384, 
+  longitude: 76.9724,
 };
 
 export default function HomeScreen() {
@@ -17,13 +17,13 @@ export default function HomeScreen() {
 
   // Haversine Formula for distance
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; 
   };
 
   const handleSignup = async () => {
@@ -35,9 +35,7 @@ export default function HomeScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-        timeout: 10000,
-      } as any);
+        accuracy: Location.Accuracy.Highest      });
 
       if (!location || !location.coords) {
         Alert.alert("Location Unavailable", "Could not determine your current location. Make sure location services are enabled and try again.");
@@ -81,9 +79,7 @@ export default function HomeScreen() {
         setIsLoggedIn(true);
         Alert.alert("Success", "Signed up successfully!");
       } else {
-        Alert.alert("Too Far", `You must be within 1km. You are ${distance.toFixed(2)}km away.` +
-        `Your Lat: ${location.coords.latitude.toFixed(4)}\n` +
-        `Your Lon: ${location.coords.longitude.toFixed(4)}`);
+        Alert.alert("Too Far", `You must be within 1km. You are ${distance.toFixed(2)}km away.`);
       }
     } catch (error: any) {
       console.error('Location error', error);
@@ -117,34 +113,36 @@ export default function HomeScreen() {
   }
 
   // --- VIEW 2: MAP & BUTTONS (Unlocked) ---
-  return (
+return (
     <View style={styles.container}>
-      <MapView
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={{
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        <Marker coordinate={OFFICE_LOCATION} title="Office" pinColor="blue" />
-        <Marker coordinate={userLocation} title="You" />
-      </MapView>
+      {/* Container for the map to ensure it fills space */}
+      <View style={styles.mapContainer}>
+        <MapView
+          style={StyleSheet.absoluteFillObject} // Forces map to fill the container
+          initialRegion={{
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+        >
+          <Marker coordinate={OFFICE_LOCATION} title="Office" pinColor="blue" />
+          <Marker coordinate={userLocation} title={userAddress ?? 'You'} />
+        </MapView>
+      </View>
 
       <View style={styles.footer}>
-        <Text style={styles.statusText}>
+        <Text style={[styles.statusText, checkInTime ? styles.statusOnline : styles.statusOffline]}>
           {checkInTime ? `Status: Online — Checked in at: ${checkInTime}` : 'Status: Offline'}
         </Text>
         <Text style={styles.locationText}>
-          {userLocation ? `Location: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}` : 'Location: Unknown'}
+          {userAddress ? `Location: ${userAddress}` : userLocation ? `Location: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}` : 'Location: Unknown'}
         </Text>
         <View style={styles.btnRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#2196F3' }]} onPress={handleCheckIn}>
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#4CAF50'}]} onPress={handleCheckIn}>
             <Text style={styles.btnText}>Check In</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#F44336' }]} onPress={handleCheckOut}>
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#F44336'}]} onPress={handleCheckOut}>
             <Text style={styles.btnText}>Check Out</Text>
           </TouchableOpacity>
         </View>
@@ -153,11 +151,14 @@ export default function HomeScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+ container: { flex: 1, backgroundColor: 'white' },
+  mapContainer: { flex: 1, overflow: 'hidden' }, // Ensure map has a container
+  map: { ...StyleSheet.absoluteFillObject },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
-  map: { flex: 1 },
+//   map: { flex: 1 },
   mainBtn: { backgroundColor: '#4CAF50', padding: 20, borderRadius: 10 },
   footer: { padding: 20, backgroundColor: 'white' },
   btnRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
@@ -166,6 +167,6 @@ const styles = StyleSheet.create({
   statusText: { textAlign: 'center', fontSize: 16, fontWeight: '600', marginBottom: 6 },
   statusOnline: { color: 'green' },
   statusOffline: { color: 'red' },
-  locationText: { textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#555', marginBottom: 8 },
+  locationText: { textAlign: 'center', fontSize: 16,fontWeight: '600', color: '#555', marginBottom: 8 },
   timeText: { textAlign: 'center', fontSize: 16, fontWeight: '500' }
 });
